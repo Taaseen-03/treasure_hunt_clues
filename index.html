@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Final Clue</title>
+    <title>Video Clue Cycler</title>
     <script type="text/javascript">
         // Array of video URLs
         var videoLinks = [
@@ -12,45 +12,22 @@
             "video_clues/video3.mp4"
         ];
 
-        // Number of videos
-        const numVideos = videoLinks.length;
-
-        // Time interval to prevent video change on reload (in milliseconds)
-        var cooldownTime = 10 * 60 * 1000; // 10 minutes
-
-        // Function to get or initialize the session video index
-        function getVideoIndex() {
-            // Get the current video index from sessionStorage
-            var videoIndex = sessionStorage.getItem('videoIndex');
-            var lastTimestamp = sessionStorage.getItem('videoTimestamp');
-
-            // If there is no videoIndex or the cooldown time has passed, assign a new video
-            if (videoIndex === null || (new Date().getTime() - lastTimestamp > cooldownTime)) {
-                // Get the current session count from sessionStorage or initialize it
-                var currentSessionCount = parseInt(sessionStorage.getItem('sessionCount')) || 0;
-
-                // Increment session count for each new session
-                currentSessionCount++;
-                sessionStorage.setItem('sessionCount', currentSessionCount);
-
-                // Calculate new video index based on session count
-                videoIndex = (currentSessionCount - 1) % numVideos; // -1 because sessionCount starts from 1
-                sessionStorage.setItem('videoIndex', videoIndex); // Store the new video index
-                sessionStorage.setItem('videoTimestamp', new Date().getTime()); // Store the current time
-            }
-
-            return videoIndex;
+        // Function to get the next video index based on previous scans
+        function getNextVideoIndex() {
+            var lastIndex = localStorage.getItem('videoIndex') || -1;
+            var nextIndex = (parseInt(lastIndex) + 1) % videoLinks.length;
+            localStorage.setItem('videoIndex', nextIndex);
+            return nextIndex;
         }
 
         // On page load, set the video source to the appropriate video
         window.onload = function() {
-            var videoIndex = getVideoIndex();
-
-            // Set the src attribute of the video element to the correct URL
+            var videoIndex = getNextVideoIndex();
             var videoUrl = videoLinks[videoIndex];
             document.getElementById("video-player").src = videoUrl;
         }
     </script>
+
 
 
     <link rel="stylesheet" href="style.css">
