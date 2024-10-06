@@ -3,56 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Final Clues</title>
+    <title>Video Clue Cycler</title>
     <script type="text/javascript">
-    // Array of video URLs
-    var videoLinks = [
-        "video_clues/video1.mp4",
-        "video_clues/video2.mp4",
-        "video_clues/video3.mp4"
-    ];
+        // Array of video URLs
+        var videoLinks = [
+            "video_clues/video1.mp4",
+            "video_clues/video2.mp4",
+            "video_clues/video3.mp4"
+        ];
 
-    // Time interval to prevent video change on reload (in milliseconds)
-    var cooldownTime = 10 * 60 * 1000; // 10 minutes
+        // Number of videos
+        const numVideos = videoLinks.length;
 
-    // Function to get the next video index based on previous scans
-    function getNextVideoIndex() {
-        // Get the last shown video index and timestamp from localStorage
-        var lastIndex = sessionStorage.getItem('videoIndex') || -1;
-        var lastTimestamp = sessionStorage.getItem('videoTimestamp') || 0;
+        // Function to get a unique video index for this session
+        function getUniqueVideoIndex() {
+            // Get the current session index from sessionStorage or initialize it
+            var currentSessionCount = parseInt(sessionStorage.getItem('sessionCount')) || 0;
 
-        // Get the current time
-        var currentTime = new Date().getTime();
+            // Update the session count
+            currentSessionCount++;
+            sessionStorage.setItem('sessionCount', currentSessionCount);
 
-        // Check if the cooldown time has passed since the last visit
-        if (currentTime - lastTimestamp < cooldownTime) {
-            // If cooldown hasn't passed, use the same video index
-            return lastIndex;
-        } else {
-            // If cooldown has passed, calculate the next video index
-            // Use Math.random() to determine a new index
-            var nextIndex = (parseInt(lastIndex) + 1) % videoLinks.length;
+            // Assign video based on session count
+            var videoIndex = (currentSessionCount - 1) % numVideos; // -1 because sessionCount starts from 1
 
-            // Store the new index and current timestamp in sessionStorage
-            sessionStorage.setItem('videoIndex', nextIndex);
-            sessionStorage.setItem('videoTimestamp', currentTime);
-
-            return nextIndex;
+            return videoIndex;
         }
-    }
 
-    // On page load, set the video source to the appropriate video
-    window.onload = function() {
-        // Generate a random seed to differentiate video selection
-        var randomSeed = Math.floor(Math.random() * videoLinks.length);
-        var videoIndex = getNextVideoIndex();
+        // On page load, set the video source to the appropriate video
+        window.onload = function() {
+            var videoIndex = getUniqueVideoIndex();
 
-        // Set the src attribute of the video element to the correct URL
-        // Ensure that the video index changes based on the seed for new sessions
-        var videoUrl = videoLinks[(videoIndex + randomSeed) % videoLinks.length];
-        document.getElementById("video-player").src = videoUrl;
-    }
-</script>
+            // Set the src attribute of the video element to the correct URL
+            var videoUrl = videoLinks[videoIndex];
+            document.getElementById("video-player").src = videoUrl;
+        }
+    </script>
 
     <link rel="stylesheet" href="style.css">
 </head>
