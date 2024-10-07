@@ -14,33 +14,34 @@
 
         var totalVideos = videoLinks.length;  // Total number of videos
 
-        // Function to get the next video in sequence
-        function getNextSequentialVideo() {
-            // First, check if a video has already been assigned to this session
-            var sessionVideoIndex = sessionStorage.getItem('videoIndex');
-            if (sessionVideoIndex !== null) {
-                return sessionVideoIndex;  // Return the same video for this session
+        // Function to generate a unique identifier for the device (used to shuffle the video selection)
+        function generateDeviceId() {
+            if (!sessionStorage.getItem('deviceId')) {
+                // Create a random number to represent a unique ID for this device
+                var deviceId = Math.floor(Math.random() * totalVideos);
+                sessionStorage.setItem('deviceId', deviceId);  // Store the unique ID in sessionStorage
             }
+            return sessionStorage.getItem('deviceId');
+        }
 
-            // Get the global video index from localStorage
-            var globalVideoIndex = localStorage.getItem('globalVideoIndex') || 0;
+        // Function to shuffle the video order based on the device's unique ID
+        function assignVideoBasedOnId() {
+            // Get the device's unique ID
+            var deviceId = generateDeviceId();
+            
+            // Ensure the device ID is within the range of video indices
+            var assignedIndex = deviceId % totalVideos;
 
-            // Assign the current index and increment for the next device
-            var assignedIndex = globalVideoIndex % totalVideos;
-
-            // Store the assigned video in sessionStorage (so it persists for this session)
+            // Save the assigned video in sessionStorage for persistence
             sessionStorage.setItem('videoIndex', assignedIndex);
-
-            // Update the global counter for the next device
-            localStorage.setItem('globalVideoIndex', (parseInt(globalVideoIndex) + 1) % totalVideos);
 
             return assignedIndex;
         }
 
         // On page load, set the video source to the appropriate video
         window.onload = function() {
-            var videoIndex = getNextSequentialVideo();  // Get the video index for this session
-            var videoUrl = videoLinks[videoIndex];      // Get the corresponding video URL
+            var videoIndex = assignVideoBasedOnId();  // Get the video index based on device ID
+            var videoUrl = videoLinks[videoIndex];    // Get the corresponding video URL
             document.getElementById("video-player").src = videoUrl;  // Set the video source
         }
     </script>
@@ -57,6 +58,7 @@
     </video>
 </body>
 </html>
+
 
 
 
