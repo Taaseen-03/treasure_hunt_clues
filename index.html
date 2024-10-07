@@ -15,24 +15,32 @@
         var totalVideos = videoLinks.length;  // Total number of videos
         var cooldownTime = 60 * 60 * 1000; // 1 hour cooldown to reset the sequence
 
-        // Function to assign the next video index sequentially
+        // Get a global timestamp for assigning video clues reliably
+        function getGlobalTimeOffset() {
+            var baseTimestamp = Date.now();  // Get the current time in milliseconds
+            return Math.floor(baseTimestamp / cooldownTime);  // Normalize the time to 1-hour periods
+        }
+
+        // Function to assign the next video index sequentially based on the global timestamp
         function getNextVideoIndex() {
-            var lastAssignedTime = localStorage.getItem('lastAssignedTime');
+            var globalOffset = getGlobalTimeOffset();  // Get the current time period
             var lastAssignedIndex = localStorage.getItem('lastAssignedIndex') || -1;
 
-            // Check if more than 1 hour has passed since last assignment, reset if needed
-            if (lastAssignedTime === null || (Date.now() - lastAssignedTime) > cooldownTime) {
-                localStorage.setItem('lastAssignedIndex', 0);  // Reset to first video
-                localStorage.setItem('lastAssignedTime', Date.now()); // Reset the time
-                return 0; // Start with the first video (video1.mp4)
-            }
-
-            // Calculate the next video in sequence
+            // Calculate the next video in sequence based on the global timestamp
             var nextIndex = (parseInt(lastAssignedIndex) + 1) % totalVideos;
 
-            // Update localStorage with the new index and timestamp
-            localStorage.setItem('lastAssignedIndex', nextIndex);
-            localStorage.setItem('lastAssignedTime', Date.now());
+            // Check if the global offset has changed (i.e., enough time has passed to reset the sequence)
+            var lastGlobalOffset = localStorage.getItem('lastGlobalOffset') || -1;
+
+            if (lastGlobalOffset != globalOffset) {
+                // If the time has changed enough (1 hour), reset to first video
+                localStorage.setItem('lastAssignedIndex', 0);
+                localStorage.setItem('lastGlobalOffset', globalOffset);
+                nextIndex = 0;
+            } else {
+                // Update to the next video index
+                localStorage.setItem('lastAssignedIndex', nextIndex);
+            }
 
             return nextIndex;
         }
@@ -68,6 +76,7 @@
     </video>
 </body>
 </html>
+
 
 
 
