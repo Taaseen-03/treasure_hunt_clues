@@ -12,29 +12,39 @@
             "video_clues/video3.mp4"
         ];
 
-        // Function to get the next video index based on previous scans
-        function getNextVideoIndex() {
-            var lastIndex = localStorage.getItem('videoIndex') || -1;
-            var nextIndex = (parseInt(lastIndex) + 1) % videoLinks.length;
-            localStorage.setItem('videoIndex', nextIndex);
-            return nextIndex;
+        // Cooldown time to prevent video change on reload (10 minutes in milliseconds)
+        var cooldownTime = 10 * 60 * 1000;
+
+        // Function to get or set the current video index
+        function getVideoIndex() {
+            var lastIndex = sessionStorage.getItem('videoIndex');
+            var lastTimestamp = sessionStorage.getItem('videoTimestamp');
+
+            // If no video index exists or cooldown time has passed, assign a new video
+            if (!lastIndex || (new Date().getTime() - lastTimestamp > cooldownTime)) {
+                // Assign a new video index
+                var newIndex = (Math.floor(Math.random() * videoLinks.length));
+                sessionStorage.setItem('videoIndex', newIndex); // Save the index
+                sessionStorage.setItem('videoTimestamp', new Date().getTime()); // Save the timestamp
+                return newIndex;
+            }
+
+            // Return the existing index
+            return lastIndex;
         }
 
         // On page load, set the video source to the appropriate video
         window.onload = function() {
-            var videoIndex = getNextVideoIndex();
+            var videoIndex = getVideoIndex(); // Get the current video index
             var videoUrl = videoLinks[videoIndex];
             document.getElementById("video-player").src = videoUrl;
         }
     </script>
 
-
-
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <h1>Treasure Hunt Final Clue</h1>
-    <!--<p>Your clue video is below:</p>-->
 
     <!-- Video player to embed the video -->
     <video id="video-player" width="640" height="360" controls autoplay muted loop>
@@ -43,4 +53,5 @@
     </video>
 </body>
 </html>
+
 
