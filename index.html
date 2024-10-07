@@ -13,35 +13,45 @@
         ];
 
         var totalVideos = videoLinks.length;  // Total number of videos
+        var cooldownTime = 60 * 60 * 1000; // 1 hour cooldown to reset the sequence
 
-        // Function to generate a unique identifier for the device (used to shuffle the video selection)
-        function generateDeviceId() {
-            if (!sessionStorage.getItem('deviceId')) {
-                // Create a random number to represent a unique ID for this device
-                var deviceId = Math.floor(Math.random() * totalVideos);
-                sessionStorage.setItem('deviceId', deviceId);  // Store the unique ID in sessionStorage
+        // Function to assign the next video index sequentially
+        function getNextVideoIndex() {
+            var lastAssignedTime = localStorage.getItem('lastAssignedTime');
+            var lastAssignedIndex = localStorage.getItem('lastAssignedIndex') || -1;
+
+            // Check if more than 1 hour has passed since last assignment, reset if needed
+            if (lastAssignedTime === null || (Date.now() - lastAssignedTime) > cooldownTime) {
+                localStorage.setItem('lastAssignedIndex', 0);  // Reset to first video
+                localStorage.setItem('lastAssignedTime', Date.now()); // Reset the time
+                return 0; // Start with the first video (video1.mp4)
             }
-            return sessionStorage.getItem('deviceId');
-        }
 
-        // Function to shuffle the video order based on the device's unique ID
-        function assignVideoBasedOnId() {
-            // Get the device's unique ID
-            var deviceId = generateDeviceId();
-            
-            // Ensure the device ID is within the range of video indices
-            var assignedIndex = deviceId % totalVideos;
+            // Calculate the next video in sequence
+            var nextIndex = (parseInt(lastAssignedIndex) + 1) % totalVideos;
 
-            // Save the assigned video in sessionStorage for persistence
-            sessionStorage.setItem('videoIndex', assignedIndex);
+            // Update localStorage with the new index and timestamp
+            localStorage.setItem('lastAssignedIndex', nextIndex);
+            localStorage.setItem('lastAssignedTime', Date.now());
 
-            return assignedIndex;
+            return nextIndex;
         }
 
         // On page load, set the video source to the appropriate video
         window.onload = function() {
-            var videoIndex = assignVideoBasedOnId();  // Get the video index based on device ID
-            var videoUrl = videoLinks[videoIndex];    // Get the corresponding video URL
+            // Check if a video has already been assigned for this session
+            var sessionVideoIndex = sessionStorage.getItem('videoIndex');
+
+            // If no video was assigned in the session, get the next one
+            if (sessionVideoIndex === null) {
+                var videoIndex = getNextVideoIndex(); // Get the next video in sequence
+                sessionStorage.setItem('videoIndex', videoIndex); // Store it for session persistence
+            } else {
+                videoIndex = sessionVideoIndex;
+            }
+
+            // Get the corresponding video URL based on the session-stored video index
+            var videoUrl = videoLinks[videoIndex];
             document.getElementById("video-player").src = videoUrl;  // Set the video source
         }
     </script>
@@ -58,6 +68,7 @@
     </video>
 </body>
 </html>
+
 
 
 
