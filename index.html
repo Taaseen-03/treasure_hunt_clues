@@ -14,31 +14,35 @@
 
         var totalVideos = videoLinks.length;  // Total number of videos (3)
 
-        // Function to get a sequential video index based on current timestamp
-        function getSequentialVideoIndex() {
-            // Get the current timestamp in milliseconds
-            var timestamp = new Date().getTime();
-            
-            // Divide the timestamp by 1 hour (3600000 ms) to keep the cycle for an hour
-            var videoIndex = Math.floor(timestamp / 3600000) % totalVideos;
+        // Function to get the next video index using a shared counter stored in localStorage
+        function getNextVideoIndex() {
+            // Get the current index from localStorage (use 0 if it doesn't exist)
+            var videoIndex = localStorage.getItem('videoIndex');
+            if (videoIndex === null) {
+                videoIndex = 0;
+            } else {
+                videoIndex = (parseInt(videoIndex) + 1) % totalVideos;  // Increment the index in a cyclic manner
+            }
 
-            // Store the assigned video in sessionStorage for the device (so it remains constant on reload)
-            sessionStorage.setItem('videoIndex', videoIndex);
+            // Store the updated video index back in localStorage
+            localStorage.setItem('videoIndex', videoIndex);
 
+            // Return the index of the video to be shown
             return videoIndex;
         }
 
         // On page load, set the video source to the appropriate video
         window.onload = function() {
-            // Check if the video has already been assigned for this session (device)
+            // Check if the video has already been assigned for this session
             var sessionVideoIndex = sessionStorage.getItem('videoIndex');
 
-            // If no video was assigned, calculate a new video index based on the timestamp
+            // If no video was assigned in the session, calculate a new video index based on the shared counter
             if (sessionVideoIndex === null) {
-                sessionVideoIndex = getSequentialVideoIndex();
+                sessionVideoIndex = getNextVideoIndex();
+                sessionStorage.setItem('videoIndex', sessionVideoIndex); // Store it for session persistence
             }
 
-            // Get the corresponding video URL based on the video index
+            // Get the corresponding video URL based on the session-stored video index
             var videoUrl = videoLinks[sessionVideoIndex];
             document.getElementById("video-player").src = videoUrl;  // Set the video source
         }
@@ -56,6 +60,7 @@
     </video>
 </body>
 </html>
+
 
 
 
