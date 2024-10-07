@@ -12,47 +12,36 @@
             "video_clues/video3.mp4"
         ];
 
-        // Function to get a random video that hasn't been used recently
-        function getRandomUniqueVideo() {
-            // Check if there's already a session video assigned
+        var totalVideos = videoLinks.length;  // Total number of videos
+
+        // Function to get the next video in sequence
+        function getNextSequentialVideo() {
+            // First, check if a video has already been assigned to this session
             var sessionVideoIndex = sessionStorage.getItem('videoIndex');
             if (sessionVideoIndex !== null) {
-                return sessionVideoIndex;
+                return sessionVideoIndex;  // Return the same video for this session
             }
 
-            // Check if other devices have used any video in the current browser window
-            var usedVideos = JSON.parse(localStorage.getItem('usedVideos')) || [];
+            // Get the global video index from localStorage
+            var globalVideoIndex = localStorage.getItem('globalVideoIndex') || 0;
 
-            // Filter out the already used videos from the available ones
-            var availableVideos = videoLinks.filter(function(video, index) {
-                return !usedVideos.includes(index);
-            });
+            // Assign the current index and increment for the next device
+            var assignedIndex = globalVideoIndex % totalVideos;
 
-            // If all videos are used, reset the available list
-            if (availableVideos.length === 0) {
-                usedVideos = [];  // Reset the used videos list
-                availableVideos = videoLinks;  // All videos are available again
-            }
+            // Store the assigned video in sessionStorage (so it persists for this session)
+            sessionStorage.setItem('videoIndex', assignedIndex);
 
-            // Randomly select an available video index
-            var randomIndex = Math.floor(Math.random() * availableVideos.length);
-            var selectedIndex = videoLinks.indexOf(availableVideos[randomIndex]);
+            // Update the global counter for the next device
+            localStorage.setItem('globalVideoIndex', (parseInt(globalVideoIndex) + 1) % totalVideos);
 
-            // Add the selected video index to used videos in localStorage
-            usedVideos.push(selectedIndex);
-            localStorage.setItem('usedVideos', JSON.stringify(usedVideos));
-
-            // Save the selected video index in sessionStorage for persistence on reload
-            sessionStorage.setItem('videoIndex', selectedIndex);
-
-            return selectedIndex;
+            return assignedIndex;
         }
 
         // On page load, set the video source to the appropriate video
         window.onload = function() {
-            var videoIndex = getRandomUniqueVideo();
-            var videoUrl = videoLinks[videoIndex];
-            document.getElementById("video-player").src = videoUrl;
+            var videoIndex = getNextSequentialVideo();  // Get the video index for this session
+            var videoUrl = videoLinks[videoIndex];      // Get the corresponding video URL
+            document.getElementById("video-player").src = videoUrl;  // Set the video source
         }
     </script>
 
@@ -68,6 +57,7 @@
     </video>
 </body>
 </html>
+
 
 
 
