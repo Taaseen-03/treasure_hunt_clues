@@ -12,36 +12,34 @@
             "video_clues/video3.mp4"
         ];
 
-        var totalVideos = videoLinks.length;  // Total number of videos
+        var totalVideos = videoLinks.length;  // Total number of videos (3)
 
-        // Function to generate a unique identifier for the device (used to shuffle the video selection)
-        function generateDeviceId() {
-            if (!sessionStorage.getItem('deviceId')) {
-                // Create a random number to represent a unique ID for this device
-                var deviceId = Math.floor(Math.random() * totalVideos);
-                sessionStorage.setItem('deviceId', deviceId);  // Store the unique ID in sessionStorage
-            }
-            return sessionStorage.getItem('deviceId');
-        }
-
-        // Function to shuffle the video order based on the device's unique ID
-        function assignVideoBasedOnId() {
-            // Get the device's unique ID
-            var deviceId = generateDeviceId();
+        // Function to get a sequential video index based on current timestamp
+        function getSequentialVideoIndex() {
+            // Get the current timestamp in milliseconds
+            var timestamp = new Date().getTime();
             
-            // Ensure the device ID is within the range of video indices
-            var assignedIndex = deviceId % totalVideos;
+            // Divide the timestamp by 1 hour (3600000 ms) to keep the cycle for an hour
+            var videoIndex = Math.floor(timestamp / 3600000) % totalVideos;
 
-            // Save the assigned video in sessionStorage for persistence
-            sessionStorage.setItem('videoIndex', assignedIndex);
+            // Store the assigned video in sessionStorage for the device (so it remains constant on reload)
+            sessionStorage.setItem('videoIndex', videoIndex);
 
-            return assignedIndex;
+            return videoIndex;
         }
 
         // On page load, set the video source to the appropriate video
         window.onload = function() {
-            var videoIndex = assignVideoBasedOnId();  // Get the video index based on device ID
-            var videoUrl = videoLinks[videoIndex];    // Get the corresponding video URL
+            // Check if the video has already been assigned for this session (device)
+            var sessionVideoIndex = sessionStorage.getItem('videoIndex');
+
+            // If no video was assigned, calculate a new video index based on the timestamp
+            if (sessionVideoIndex === null) {
+                sessionVideoIndex = getSequentialVideoIndex();
+            }
+
+            // Get the corresponding video URL based on the video index
+            var videoUrl = videoLinks[sessionVideoIndex];
             document.getElementById("video-player").src = videoUrl;  // Set the video source
         }
     </script>
@@ -58,6 +56,7 @@
     </video>
 </body>
 </html>
+
 
 
 
