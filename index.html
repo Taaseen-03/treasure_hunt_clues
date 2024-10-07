@@ -12,30 +12,38 @@
             "video_clues/video3.mp4"
         ];
 
-        // Cooldown time to prevent video change on reload (10 minutes in milliseconds)
-        var cooldownTime = 10 * 60 * 1000;
+        // Total number of videos
+        var totalVideos = videoLinks.length;
 
-        // Function to get or set the current video index
+        // Function to get or set the video index for the current session
         function getVideoIndex() {
-            var lastIndex = sessionStorage.getItem('videoIndex');
-            var lastTimestamp = sessionStorage.getItem('videoTimestamp');
+            // Check if the video is already set in sessionStorage (for reload cases)
+            var sessionVideoIndex = sessionStorage.getItem('videoIndex');
 
-            // If no video index exists or cooldown time has passed, assign a new video
-            if (!lastIndex || (new Date().getTime() - lastTimestamp > cooldownTime)) {
-                // Assign a new video index
-                var newIndex = (Math.floor(Math.random() * videoLinks.length));
-                sessionStorage.setItem('videoIndex', newIndex); // Save the index
-                sessionStorage.setItem('videoTimestamp', new Date().getTime()); // Save the timestamp
-                return newIndex;
+            // If session already has a video, use it
+            if (sessionVideoIndex !== null) {
+                return sessionVideoIndex;
             }
 
-            // Return the existing index
-            return lastIndex;
+            // Otherwise, assign a new video index for this device
+            var globalVideoIndex = localStorage.getItem('globalVideoIndex') || 0;
+
+            // Use the current global index and increment for next device
+            var newIndex = globalVideoIndex % totalVideos;
+
+            // Update globalVideoIndex for the next device (circling through videos)
+            localStorage.setItem('globalVideoIndex', (parseInt(globalVideoIndex) + 1) % totalVideos);
+
+            // Store the new video index in sessionStorage to persist within this session
+            sessionStorage.setItem('videoIndex', newIndex);
+
+            // Return the newly assigned video index
+            return newIndex;
         }
 
         // On page load, set the video source to the appropriate video
         window.onload = function() {
-            var videoIndex = getVideoIndex(); // Get the current video index
+            var videoIndex = getVideoIndex();
             var videoUrl = videoLinks[videoIndex];
             document.getElementById("video-player").src = videoUrl;
         }
@@ -53,5 +61,6 @@
     </video>
 </body>
 </html>
+
 
 
