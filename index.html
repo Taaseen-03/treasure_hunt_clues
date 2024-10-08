@@ -19,8 +19,16 @@
             return 'session-' + Math.random().toString(36).substr(2, 9);  // Random unique ID
         }
 
-        // Function to assign the next video in sequence without repeating the last one at cycle restart
-        function getNextVideoIndex() {
+        // Small delay to prevent race conditions between devices accessing at the same time
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Function to assign the next video in sequence, without repeating the last one at cycle restart
+        async function getNextVideoIndex() {
+            // Introduce a small delay to prevent race condition when multiple devices access the page
+            await delay(Math.floor(Math.random() * 100) + 50);
+
             // Get the total number of accesses from localStorage (default to 0 if not set)
             var accessCount = localStorage.getItem('accessCount') || 0;
 
@@ -38,7 +46,7 @@
         }
 
         // On page load, set the video source to the appropriate video
-        window.onload = function() {
+        window.onload = async function() {
             // Check if a session video has already been assigned for this device
             var sessionVideoIndex = sessionStorage.getItem('videoIndex');
 
@@ -47,7 +55,7 @@
                 var sessionID = generateSessionID();
                 sessionStorage.setItem('sessionID', sessionID);  // Store session ID (for future use)
 
-                var videoIndex = getNextVideoIndex();  // Get the next video in sequence
+                var videoIndex = await getNextVideoIndex();  // Get the next video in sequence
                 sessionStorage.setItem('videoIndex', videoIndex);  // Store it in sessionStorage
             } else {
                 // If video is already assigned in the session, use the stored videoIndex
@@ -72,6 +80,7 @@
     </video>
 </body>
 </html>
+
 
 
 
