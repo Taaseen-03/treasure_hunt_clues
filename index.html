@@ -12,58 +12,38 @@
             "video_clues/video3.mp4"
         ];
 
-        var totalVideos = videoLinks.length;  // Total number of videos
+        // Store the total number of videos
+        var totalVideos = videoLinks.length;
 
-        // Function to generate a unique session ID for each device
-        function generateSessionID() {
-            return 'session-' + Math.random().toString(36).substr(2, 9);  // Random unique ID
-        }
+        // Get the current video index from session storage
+        function getAssignedVideo() {
+            // Check if this device already has a video assigned (from sessionStorage)
+            var assignedVideo = sessionStorage.getItem('videoIndex');
+            
+            // If the device already has a video assigned, return that video index
+            if (assignedVideo !== null) {
+                return parseInt(assignedVideo); 
+            }
 
-        // Small delay to prevent race conditions between devices accessing at the same time
-        function delay(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
+            // If no video is assigned yet, assign the next video in sequence
+            var currentGlobalIndex = localStorage.getItem('globalVideoIndex') || 0;
 
-        // Function to assign the next video in sequence, without repeating the last one at cycle restart
-        async function getNextVideoIndex() {
-            // Introduce a small delay to prevent race condition when multiple devices access the page
-            await delay(Math.floor(Math.random() * 100) + 50);
+            // Calculate the next video index (1 → 2 → 3 → 1 → 2 → 3)
+            var nextVideoIndex = currentGlobalIndex % totalVideos;
 
-            // Get the total number of accesses from localStorage (default to 0 if not set)
-            var accessCount = localStorage.getItem('accessCount') || 0;
+            // Store the new global index for the next device that accesses the page
+            localStorage.setItem('globalVideoIndex', (parseInt(currentGlobalIndex) + 1) % totalVideos);
 
-            // Get the last video shown (default to -1 if not set)
-            var lastVideoIndex = localStorage.getItem('lastVideoIndex') || -1;
-
-            // Calculate the next video index, ensuring it's not the same as the last one
-            var nextVideoIndex = (parseInt(lastVideoIndex) + 1) % totalVideos;
-
-            // Store the new access count and the new last video index
-            localStorage.setItem('accessCount', parseInt(accessCount) + 1);
-            localStorage.setItem('lastVideoIndex', nextVideoIndex);
+            // Save the assigned video for this device in sessionStorage to prevent reload changes
+            sessionStorage.setItem('videoIndex', nextVideoIndex);
 
             return nextVideoIndex;
         }
 
         // On page load, set the video source to the appropriate video
-        window.onload = async function() {
-            // Check if a session video has already been assigned for this device
-            var sessionVideoIndex = sessionStorage.getItem('videoIndex');
-
-            if (sessionVideoIndex === null) {
-                // If no video was assigned yet, generate a session ID and assign the next video
-                var sessionID = generateSessionID();
-                sessionStorage.setItem('sessionID', sessionID);  // Store session ID (for future use)
-
-                var videoIndex = await getNextVideoIndex();  // Get the next video in sequence
-                sessionStorage.setItem('videoIndex', videoIndex);  // Store it in sessionStorage
-            } else {
-                // If video is already assigned in the session, use the stored videoIndex
-                videoIndex = sessionVideoIndex;
-            }
-
-            // Get the corresponding video URL based on the assigned video index
-            var videoUrl = videoLinks[videoIndex];
+        window.onload = function() {
+            var videoIndex = getAssignedVideo();  // Get the assigned video index
+            var videoUrl = videoLinks[videoIndex];  // Get the corresponding video URL
             document.getElementById("video-player").src = videoUrl;  // Set the video source
         }
     </script>
@@ -80,6 +60,7 @@
     </video>
 </body>
 </html>
+
 
 
 
