@@ -13,52 +13,48 @@
         ];
 
         var totalVideos = videoLinks.length;  // Total number of videos
-        var cooldownTime = 60 * 60 * 1000; // 1 hour cooldown to reset the sequence
 
-        // Get a global timestamp for assigning video clues reliably
-        function getGlobalTimeOffset() {
-            var baseTimestamp = Date.now();  // Get the current time in milliseconds
-            return Math.floor(baseTimestamp / cooldownTime);  // Normalize the time to 1-hour periods
+        // Function to generate a unique session ID for each device
+        function generateSessionID() {
+            return 'session-' + Math.random().toString(36).substr(2, 9);  // Random unique ID
         }
 
-        // Function to assign the next video index sequentially based on the global timestamp
+        // Function to assign the next video in sequence without repeating the last one at cycle restart
         function getNextVideoIndex() {
-            var globalOffset = getGlobalTimeOffset();  // Get the current time period
-            var lastAssignedIndex = localStorage.getItem('lastAssignedIndex') || -1;
+            // Get the total number of accesses from localStorage (default to 0 if not set)
+            var accessCount = localStorage.getItem('accessCount') || 0;
 
-            // Calculate the next video in sequence based on the global timestamp
-            var nextIndex = (parseInt(lastAssignedIndex) + 1) % totalVideos;
+            // Get the last video shown (default to -1 if not set)
+            var lastVideoIndex = localStorage.getItem('lastVideoIndex') || -1;
 
-            // Check if the global offset has changed (i.e., enough time has passed to reset the sequence)
-            var lastGlobalOffset = localStorage.getItem('lastGlobalOffset') || -1;
+            // Calculate the next video index, ensuring it's not the same as the last one
+            var nextVideoIndex = (parseInt(lastVideoIndex) + 1) % totalVideos;
 
-            if (lastGlobalOffset != globalOffset) {
-                // If the time has changed enough (1 hour), reset to first video
-                localStorage.setItem('lastAssignedIndex', 0);
-                localStorage.setItem('lastGlobalOffset', globalOffset);
-                nextIndex = 0;
-            } else {
-                // Update to the next video index
-                localStorage.setItem('lastAssignedIndex', nextIndex);
-            }
+            // Store the new access count and the new last video index
+            localStorage.setItem('accessCount', parseInt(accessCount) + 1);
+            localStorage.setItem('lastVideoIndex', nextVideoIndex);
 
-            return nextIndex;
+            return nextVideoIndex;
         }
 
         // On page load, set the video source to the appropriate video
         window.onload = function() {
-            // Check if a video has already been assigned for this session
+            // Check if a session video has already been assigned for this device
             var sessionVideoIndex = sessionStorage.getItem('videoIndex');
 
-            // If no video was assigned in the session, get the next one
             if (sessionVideoIndex === null) {
-                var videoIndex = getNextVideoIndex(); // Get the next video in sequence
-                sessionStorage.setItem('videoIndex', videoIndex); // Store it for session persistence
+                // If no video was assigned yet, generate a session ID and assign the next video
+                var sessionID = generateSessionID();
+                sessionStorage.setItem('sessionID', sessionID);  // Store session ID (for future use)
+
+                var videoIndex = getNextVideoIndex();  // Get the next video in sequence
+                sessionStorage.setItem('videoIndex', videoIndex);  // Store it in sessionStorage
             } else {
+                // If video is already assigned in the session, use the stored videoIndex
                 videoIndex = sessionVideoIndex;
             }
 
-            // Get the corresponding video URL based on the session-stored video index
+            // Get the corresponding video URL based on the assigned video index
             var videoUrl = videoLinks[videoIndex];
             document.getElementById("video-player").src = videoUrl;  // Set the video source
         }
@@ -76,6 +72,7 @@
     </video>
 </body>
 </html>
+
 
 
 
